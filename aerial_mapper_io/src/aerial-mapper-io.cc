@@ -251,12 +251,10 @@ void AerialMapperIO::loadImagesFromFile(
 aslam::NCamera::Ptr AerialMapperIO::loadCameraRigFromFile(
     const std::string& filename_ncameras_yaml) {
   CHECK(filename_ncameras_yaml != "");
-  aslam::NCamera::Ptr ncameras;
+  aslam::NCamera::Ptr ncameras(new aslam::NCamera());
   LOG(INFO) << "Loading camera calibration from: "
             << filename_ncameras_yaml;
-  YAML::Node yaml = YAML::LoadFile(filename_ncameras_yaml);
-  ncameras = std::make_shared<aslam::NCamera>();
-  ncameras->loadFromYamlNode(yaml);
+  ncameras->deserializeFromFile(filename_ncameras_yaml);
   CHECK(ncameras) << "Could not load the camera calibration from: "
                   << filename_ncameras_yaml;
  return ncameras;
