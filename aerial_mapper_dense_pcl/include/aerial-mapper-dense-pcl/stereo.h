@@ -76,7 +76,7 @@ class Stereo {
   ros::NodeHandle node_handle_;
   image_transport::ImageTransport image_transport_;
   image_transport::Publisher pub_undistorted_image_;
-  ros::Publisher pub_point_cloud_;
+  ros::Publisher pub_point_cloud_, pub_pose_;
   sensor_msgs::PointCloud2 point_cloud_ros_msg_;
 
   std::unique_ptr<Rectifier> rectifier_;

@@ -1,9 +1,9 @@
 # general
---alsologtostderr=true
+--alsologtostderr=false
 --v=200
 
 # dataset
---data_directory=/media/ian/SSD1/tmp_datasets/eth_aerial_mapper/cadastre/
+--data_directory=/media/ian/SSD1/tmp_datasets/eth_aerial_mapper/unity_test/
 --filename_poses=opt_poses.txt
 --prefix_images=image_
 --filename_camera_rig=camera_fixed_wing.yaml
@@ -18,3 +18,4 @@
 --ortho_from_pcl_delta_easting=200.0
 --ortho_from_pcl_delta_northing=200.0
 --ortho_from_pcl_resolution=0.5
+--use_BM=false

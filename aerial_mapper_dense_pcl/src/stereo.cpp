@@ -6,6 +6,7 @@
  */
 
 #include "aerial-mapper-dense-pcl/stereo.h"
+#include <opencv2/highgui/highgui.hpp>
 
 namespace stereo {
 
@@ -77,6 +78,8 @@ Stereo::Stereo(const std::shared_ptr<aslam::NCamera> ncameras,
 
   pub_point_cloud_ = node_handle_.advertise<sensor_msgs::PointCloud2>(
       "/planar_rectification/point_cloud", 100);
+  pub_pose_ = node_handle_.advertise<geometry_msgs::PoseStamped>(
+      "/planar_rectification/pose", 100);
 }
 
 void Stereo::addFrames(const Poses& T_G_Bs, const Images& images,
@@ -128,14 +131,14 @@ void Stereo::addFrame(const Pose& T_G_B, const Image& image_raw,
     // Prepare the first/left frame of the stereo pair.
     stereo_rig_params_.t_G_C1 = (T_G_B * T_B_C_).getPosition();
     stereo_rig_params_.R_G_C1 = (T_G_B * T_B_C_).getRotationMatrix();
-    image_distorted_1_ = image_raw;
+    image_distorted_1_ = image;
     first_frame_ = false;
     return;
   }
   // Prepare the second/right frame of the stereo pair.
   stereo_rig_params_.t_G_C2 = (T_G_B * T_B_C_).getPosition();
   stereo_rig_params_.R_G_C2 = (T_G_B * T_B_C_).getRotationMatrix();
-  image_distorted_2_ = image_raw;
+  image_distorted_2_ = image;
 
   processStereoFrame(point_cloud, point_cloud_intensities);
 
@@ -162,6 +165,19 @@ void Stereo::processStereoFrame(
   rectifier_->rectifyStereoPair(stereo_rig_params_, image_undistorted_1,
                                 image_undistorted_2, &rectified_stereo_pair);
 
+  cv::Mat images_undistorted, images_raw;
+  cv::Mat images_undist_arr[] = {rectified_stereo_pair.image_left, rectified_stereo_pair.image_right};
+  cv::hconcat(images_undist_arr, 2, images_undistorted);
+  for (int y=0; y<images_undistorted.size().height; y+=20) {
+    cv::line(images_undistorted, cv::Point(0, y), cv::Point(images_undistorted.size().width-1, y), cv::Scalar(255,255,255));
+  }
+
+  cv::Mat images_raw_arr[] = {image_undistorted_1, image_undistorted_2};
+  cv::hconcat(images_raw_arr, 2, images_raw);
+  cv::imshow("undist", images_raw);
+  cv::imshow("rect", images_undistorted);
+  cv::waitKey(10);
+
   // 3. Compute disparity map based on rectified images.
   DensifiedStereoPair densified_stereo_pair;
   densifier_->computeDisparityMap(rectified_stereo_pair,
@@ -179,10 +195,25 @@ void Stereo::processStereoFrame(
   if (point_cloud_intensities) {
     *point_cloud_intensities = densified_stereo_pair.point_cloud_intensities;
   }
+
+  //Compute pose
+  geometry_msgs::PoseStamped pose;
+  pose.header.frame_id = "/world";
+  pose.header.stamp = timestamp;
+  pose.pose.position.x = stereo_rig_params_.t_G_C1[0];
+  pose.pose.position.y = stereo_rig_params_.t_G_C1[1];
+  pose.pose.position.z = stereo_rig_params_.t_G_C1[2];
+  Eigen::Quaterniond quat(stereo_rig_params_.R_G_C1);
+  pose.pose.orientation.x = quat.x();
+  pose.pose.orientation.y = quat.y();
+  pose.pose.orientation.z = quat.z();
+  pose.pose.orientation.w = quat.w();
   
   // 5. Publish the point cloud.
   pub_point_cloud_.publish(point_cloud_ros_msg_);
-  ros::spinOnce();
+  pub_pose_.publish(pose);
+  //ros::spinOnce();
+  //ros::Duration(0.2).sleep();
 
   // [Optional] Visualize rectification.
   if (settings_.show_rectification) {

@@ -3,7 +3,7 @@
 --v=0
 
 # dataset
---backward_grid_data_directory=/tmp/simulation/
+--backward_grid_data_directory=/media/ian/SSD1/tmp_datasets/eth_aerial_mapper/cadastre/
 --backward_grid_filename_poses=opt_poses.txt
 --backward_grid_prefix_images=image_
 --backward_grid_filename_camera_rig=camera_fixed_wing.yaml
@@ -21,3 +21,6 @@
 --backward_grid_delta_easting=200.0
 --backward_grid_delta_northing=200.0
 --backward_grid_resolution=0.5
+--backward_grid_use_multi_threads=true
+
+--dense_pcl_use_every_nth_image=5

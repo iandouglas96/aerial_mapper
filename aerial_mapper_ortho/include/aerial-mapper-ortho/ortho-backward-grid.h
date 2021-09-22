@@ -63,10 +63,6 @@ class OrthoBackwardGrid {
   std::shared_ptr<aslam::NCamera> ncameras_;
   static constexpr size_t kFrameIdx = 0u;
   Settings settings_;
-
-  // Multi-threading.
-  std::unordered_map<size_t, grid_map::Index> map_sample_to_cell_index_;
-  std::vector<size_t> samples_idx_range_;
 };
 }  // namespace ortho
 

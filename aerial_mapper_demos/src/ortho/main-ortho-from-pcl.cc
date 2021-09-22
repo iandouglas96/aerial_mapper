@@ -135,8 +135,15 @@ int main(int argc, char** argv) {
   ortho::OrthoFromPcl mosaic(settings);
   mosaic.process(point_cloud, point_cloud_intensities, map.getMutable());
 
+  std::cout << "=============" << std::endl;
+  std::cout << (*map.getMutable())["ortho"](95, 392) << std::endl;
+
   LOG(INFO) << "Publish until shutdown.";
   map.publishUntilShutdown();
+  //while (ros::ok()) {
+  //  map.publishOnce();
+  //  ros::spinOnce();
+  //}
 
   return 0;
 }

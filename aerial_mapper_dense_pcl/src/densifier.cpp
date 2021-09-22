@@ -69,8 +69,9 @@ void Densifier::computePointCloud(
             (u + Q(0, 3)) / w, (Q(1, 1) * v + Q(1, 3)) / w, (Q(2, 3)) / w);
 
         // Point defined in world/global frame.
-        const Eigen::Vector3d point_G(rectified_stereo_pair.R_G_C * point_r1 +
+        const Eigen::Vector3d point_G(rectified_stereo_pair.R_G_C.inverse() * point_r1 +
                                       stereo_pair.t_G_C1);
+        //const Eigen::Vector3d point_G(point_r1);
         const float x = point_G(0);
         const float y = point_G(1);
         const float z = point_G(2);

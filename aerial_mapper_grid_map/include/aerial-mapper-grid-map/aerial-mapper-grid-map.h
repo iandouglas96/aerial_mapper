@@ -15,6 +15,9 @@
 #include <grid_map_core/iterators/GridMapIterator.hpp>
 #include <grid_map_cv/grid_map_cv.hpp>
 #include <grid_map_msgs/GridMap.h>
+#include <cv_bridge/cv_bridge.h>
+#include <sensor_msgs/Image.h>
+#include <geometry_msgs/PointStamped.h>
 #include <ros/publisher.h>
 #include <ros/ros.h>
 
@@ -37,6 +40,7 @@ class AerialGridMap{
   void publishUntilShutdown();
 
   void publishOnce();
+  void publishImageOnce();
 
   grid_map::GridMap* getMutable() {
     return &map_;
@@ -45,12 +49,15 @@ class AerialGridMap{
 private:
 
   void initialize();
+  Position getCornerPos();
 
   grid_map::GridMap map_;
+  cv::Mat color_lut_;
+  Position init_pos_;
 
   Settings settings_;
   ros::NodeHandle node_handle_;
-  ros::Publisher pub_grid_map_;
+  ros::Publisher pub_grid_map_, pub_map_image_, pub_map_image_viz_, pub_map_loc_;
 };
 
 

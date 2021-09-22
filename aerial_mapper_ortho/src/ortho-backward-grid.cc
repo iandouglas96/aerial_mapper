@@ -26,22 +26,12 @@ OrthoBackwardGrid::OrthoBackwardGrid(
     : ncameras_(ncameras), settings_(settings) {
   CHECK(ncameras_);
   printParams();
-
-  if (settings_.use_multi_threads) {
-    // Create one sample for every cell.
-    samples_idx_range_.clear();
-    size_t sample_counter = 0u;
-    for (grid_map::GridMapIterator it(*map); !it.isPastEnd(); ++it) {
-      samples_idx_range_.push_back(sample_counter);
-      map_sample_to_cell_index_.insert(std::make_pair(sample_counter, *it));
-      ++sample_counter;
-    }
-  }
 }
 
 void OrthoBackwardGrid::updateOrthomosaicLayer(const Poses& T_G_Cs,
                                                const Images& images,
                                                grid_map::GridMap* map) const {
+  std::cout << "update orthomosaic layer" << std::endl;
   CHECK(ncameras_);
   const aslam::Camera& camera = ncameras_->getCamera(kFrameIdx);
 
@@ -54,6 +44,7 @@ void OrthoBackwardGrid::updateOrthomosaicLayer(const Poses& T_G_Cs,
 
   ros::Time time1 = ros::Time::now();
   for (grid_map::GridMapIterator it(*map); !it.isPastEnd(); ++it) {
+    //std::cout << "next pixel" << std::endl;
     grid_map::Position position;
     map->getPosition(*it, position);
     const grid_map::Index index(*it);
@@ -64,6 +55,7 @@ void OrthoBackwardGrid::updateOrthomosaicLayer(const Poses& T_G_Cs,
 
     // Loop over all images.
     for (size_t i = 0u; i < images.size(); ++i) {
+      //std::cout << "image " << i << std::endl;
       const Eigen::Vector3d& C_landmark =
           T_G_Cs[i].inverse().transform(landmark_UTM);
       Eigen::Vector2d keypoint;
@@ -127,6 +119,7 @@ void OrthoBackwardGrid::updateOrthomosaicLayer(const Poses& T_G_Cs,
 
 void OrthoBackwardGrid::updateOrthomosaicLayerMultiThreaded(
     const Poses& T_G_Cs, const Images& images, grid_map::GridMap* map) const {
+  std::cout << "update orthomosaic layer multi threaded" << std::endl;
   CHECK(ncameras_);
   const aslam::Camera& camera = ncameras_->getCamera(kFrameIdx);
 
@@ -142,7 +135,8 @@ void OrthoBackwardGrid::updateOrthomosaicLayerMultiThreaded(
   auto generateCellWiseOrthomosaic =
       [&](const std::vector<size_t>& sample_idx_range_) {
     for (size_t sample_idx : sample_idx_range_) {
-      grid_map::Index index = map_sample_to_cell_index_.at(sample_idx);
+      //std::cout << "next pixel " << sample_idx << "/" << samples_idx_range_.size() << std::endl;
+      grid_map::Index index(sample_idx % map->getSize().x(), sample_idx / map->getSize().x());
       double x = index(0);
       double y = index(1);
 
@@ -154,6 +148,7 @@ void OrthoBackwardGrid::updateOrthomosaicLayerMultiThreaded(
 
       // Loop over all images.
       for (size_t i = 0u; i < images.size(); ++i) {
+        //std::cout << "image " << i << std::endl;
         const Eigen::Vector3d& C_landmark =
             T_G_Cs[i].inverse().transform(landmark_UTM);
         Eigen::Vector2d keypoint;
@@ -211,13 +206,13 @@ void OrthoBackwardGrid::updateOrthomosaicLayerMultiThreaded(
     }        // loop samples
   };         // lambda function
 
-  const size_t num_samples = samples_idx_range_.size();
+  const size_t num_samples = map->getSize().x() * map->getSize().y();
   const size_t num_threads = std::thread::hardware_concurrency();
   utils::parFor(num_samples, generateCellWiseOrthomosaic, num_threads);
 
   const ros::Time time2 = ros::Time::now();
   const ros::Duration& delta_time = time2 - time1;
-  VLOG(1) << "dt(backward_grid, multi-threads): " << delta_time;
+  std::cout << "dt(backward_grid, multi-threads): " << delta_time << std::endl;
 }
 
 void OrthoBackwardGrid::process(const Poses& T_G_Bs, const Images& images,
@@ -225,12 +220,13 @@ void OrthoBackwardGrid::process(const Poses& T_G_Bs, const Images& images,
   CHECK(!T_G_Bs.empty());
   CHECK(T_G_Bs.size() == images.size());
   CHECK(map);
-  LOG(INFO) << "Num. images = " << images.size();
+  std::cout << "Num. images = " << images.size() << std::endl;
 
   Poses T_G_Cs;
   for (const Pose& T_G_B : T_G_Bs) {
     T_G_Cs.push_back(T_G_B * ncameras_->get_T_C_B(0u).inverse());
   }
+  std::cout << "Poses loaded" << std::endl;
   if (settings_.use_multi_threads) {
     updateOrthomosaicLayerMultiThreaded(T_G_Cs, images, map);
   } else {

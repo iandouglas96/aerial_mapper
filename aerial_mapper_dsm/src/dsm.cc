@@ -21,16 +21,6 @@ Dsm::Dsm(const Settings& settings, grid_map::GridMap* map)
     : settings_(settings) {
   CHECK(map);
   printParams();
-  if (settings_.use_multi_threads) {
-    // Create one sample for every cell.
-    samples_idx_range_.clear();
-    size_t sample_counter = 0u;
-    for (grid_map::GridMapIterator it(*map); !it.isPastEnd(); ++it) {
-      samples_idx_range_.push_back(sample_counter);
-      map_sample_to_cell_index_.insert(std::make_pair(sample_counter, *it));
-      ++sample_counter;
-    }
-  }
 }
 
 void Dsm::initializeAndFillKdTree(
@@ -117,7 +107,7 @@ void Dsm::updateElevationLayerMultiThreaded(grid_map::GridMap* map) {
 
   auto generateCellWiseDsm = [&](const std::vector<size_t>& sample_idx_range_) {
     for (size_t sample_idx : sample_idx_range_) {
-      grid_map::Index index = map_sample_to_cell_index_.at(sample_idx);
+      grid_map::Index index(sample_idx % map->getSize().x(), sample_idx / map->getSize().x());
       double x = index(0);
       double y = index(1);
 
@@ -130,20 +120,21 @@ void Dsm::updateElevationLayerMultiThreaded(grid_map::GridMap* map) {
       const double query_pt[3] = {position.x(), position.y(), 0.0};
       kd_tree_->findNeighbors(result_set, query_pt, nanoflann::SearchParams());
 
-      if (true) {
-        double lambda = 1.0;
-        while (result_set.size() == 0u) {
-          nanoflann::RadiusResultSet<double, int> tmp(
-              lambda * settings_.interpolation_radius, indices_dists);
-          kd_tree_->findNeighbors(tmp, query_pt, nanoflann::SearchParams());
-          lambda *= 1.1;
-          if (lambda * settings_.interpolation_radius > 7.0) {
-            break;
-          }
-        }
-      }
+      //if (true) {
+      //  double lambda = 1.0;
+      //  while (result_set.size() == 0u) {
+      //    nanoflann::RadiusResultSet<double, int> tmp(
+      //        lambda * settings_.interpolation_radius, indices_dists);
+      //    kd_tree_->findNeighbors(tmp, query_pt, nanoflann::SearchParams());
+      //    lambda *= 1.1;
+      //    if (lambda * settings_.interpolation_radius > 7.0) {
+      //      break;
+      //    }
+      //  }
+      //}
 
       bool samples_in_interpolation_radius = result_set.size() > 0u;
+      //std::cout << "test" << std::endl;
       if (samples_in_interpolation_radius) {
         std::vector<double> distances;
         std::vector<double> heights;
@@ -169,12 +160,17 @@ void Dsm::updateElevationLayerMultiThreaded(grid_map::GridMap* map) {
         }
         CHECK(idw_denominator > 0.0);
         double idw_height = idw_numerator / idw_denominator;
-        layer_elevation(x, y) = idw_height;
+        //std::cout << idw_height << std::endl;
+        //helps prevent trees from losing height by not allowing height of dsm to drop
+        //might cause future issues, but useful for now
+        if (std::isnan(layer_elevation(x, y)) || layer_elevation(x, y) < idw_height) {
+          layer_elevation(x, y) = idw_height;
+        }
       }
     }  // loop samples
   };   // lambda function
 
-  const size_t num_samples = samples_idx_range_.size();
+  const size_t num_samples = map->getSize().x() * map->getSize().y();
   const size_t num_threads = std::thread::hardware_concurrency();
   utils::parFor(num_samples, generateCellWiseDsm, num_threads);
 
@@ -186,16 +182,20 @@ void Dsm::updateElevationLayerMultiThreaded(grid_map::GridMap* map) {
 void Dsm::process(
     const AlignedType<std::vector, Eigen::Vector3d>::type& point_cloud,
     grid_map::GridMap* map) {
+  std::cout << "starting DSM process" << std::endl;
   if (point_cloud.empty()) {
     LOG(WARNING) << "Passed empty point cloud to DSM module";
     return;
   }
 
   CHECK(map);
+  std::cout << "initializing kd tree" << std::endl;
   initializeAndFillKdTree(point_cloud);
   if (settings_.use_multi_threads) {
+    std::cout << "multithreaded dsm" << std::endl;
     updateElevationLayerMultiThreaded(map);
   } else {
+    std::cout << "singlethreaded dsm" << std::endl;
     updateElevationLayer(map);
   }
 }

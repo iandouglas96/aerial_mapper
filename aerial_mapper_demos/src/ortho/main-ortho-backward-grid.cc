@@ -107,15 +107,15 @@ int main(int argc, char** argv) {
     stereo::Settings settings_dense_pcl;
     settings_dense_pcl.use_every_nth_image =
         FLAGS_dense_pcl_use_every_nth_image;
-    LOG(INFO) << "Perform dense reconstruction using planar rectification.";
+    std::cout << "Perform dense reconstruction using planar rectification." << std::endl;
     stereo::BlockMatchingParameters block_matching_params;
     block_matching_params.use_BM = FLAGS_use_BM;
     stereo::Stereo stereo(ncameras, settings_dense_pcl, block_matching_params);
-    AlignedType<std::vector, Eigen::Vector3d>::type point_cloud;
+    //AlignedType<std::vector, Eigen::Vector3d>::type point_cloud;
     stereo.addFrames(T_G_Bs, images, &point_cloud);
   }
 
-  LOG(INFO) << "Initialize layered map.";
+  std::cout << "Initialize layered map." << std::endl;
   grid_map::Settings settings_aerial_grid_map;
   settings_aerial_grid_map.center_easting = FLAGS_backward_grid_center_easting;
   settings_aerial_grid_map.center_northing =
@@ -125,22 +125,23 @@ int main(int argc, char** argv) {
   settings_aerial_grid_map.resolution = FLAGS_backward_grid_resolution;
   grid_map::AerialGridMap map(settings_aerial_grid_map);
 
-  LOG(INFO) << "Create DSM (batch).";
+  std::cout << "Create DSM (batch)" << std::endl;
   dsm::Settings settings_dsm;
   settings_dsm.center_easting = settings_aerial_grid_map.center_easting;
   settings_dsm.center_northing = settings_aerial_grid_map.center_northing;
   dsm::Dsm digital_surface_map(settings_dsm, map.getMutable());
   digital_surface_map.process(point_cloud, map.getMutable());
 
-  LOG(INFO) << "Construct the orthomosaic (batch).";
+  std::cout << "Construct the orthomosaic (batch)." << std::endl;
   ortho::Settings settings_ortho;
   parseSettingsOrtho(&settings_ortho);
   ortho::OrthoBackwardGrid mosaic(ncameras, settings_ortho, map.getMutable());
   // Orthomosaic via back-projecting cell center into image
   // and quering pixel intensity in image.
+  std::cout << "Process the orthomosaic." << std::endl;
   mosaic.process(T_G_Bs, images, map.getMutable());
 
-  LOG(INFO) << "Publish until shutdown.";
+  std::cout << "Publish until shutdown." << std::endl;
   map.publishUntilShutdown();
 
   return 0;

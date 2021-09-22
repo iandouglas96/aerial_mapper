@@ -48,6 +48,7 @@ void OrthoFromPcl::process(
   // Loop over all cells.
   const ros::Time time1 = ros::Time::now();
   grid_map::Matrix& layer_ortho = (*map)["ortho"];
+  grid_map::Matrix& layer_elevation = (*map)["elevation"];
   for (grid_map::GridMapIterator it(*map); !it.isPastEnd(); ++it) {
     grid_map::Position position;
     map->getPosition(*it, position);
@@ -104,6 +105,9 @@ void OrthoFromPcl::process(
       CHECK(idw_denominator > 0.0);
       const double idw_height = idw_numerator / idw_denominator;
       layer_ortho(x, y) = idw_height;
+      layer_elevation(x, y) = 0;
+      std::cout << idw_height << std::endl;
+      std::cout << x << ", " << y << std::endl;
     }
   }
 

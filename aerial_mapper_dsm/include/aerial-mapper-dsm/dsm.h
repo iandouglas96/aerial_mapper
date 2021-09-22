@@ -63,10 +63,6 @@ class Dsm {
   PointCloud<double> cloud_kdtree_;
   std::unique_ptr<my_kd_tree_t> kd_tree_;
   std::unique_ptr<PC2KD> pc2kd_;
-
-  // Multi-threading.
-  std::unordered_map<size_t, grid_map::Index> map_sample_to_cell_index_;
-  std::vector<size_t> samples_idx_range_;
 };
 
 }  // namespace dsm

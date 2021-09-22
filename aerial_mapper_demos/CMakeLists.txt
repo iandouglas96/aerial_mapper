@@ -26,6 +26,12 @@ add_dependencies(${PROJECT_NAME}_ortho_backward_grid ${${PROJECT_NAME}_EXPORTED_
 target_link_libraries(${PROJECT_NAME}_ortho_backward_grid ${catkin_LIBRARIES})
 
 # ORTHO-MOSAIC: backward/grid incremental
+cs_add_executable(${PROJECT_NAME}_ortho_ros_stream
+    src/ortho/main-ortho-ros-stream.cc)
+add_dependencies(${PROJECT_NAME}_ortho_ros_stream ${${PROJECT_NAME}_EXPORTED_TARGETS}})
+target_link_libraries(${PROJECT_NAME}_ortho_ros_stream ${catkin_LIBRARIES})
+
+# ORTHO-MOSAIC: backward/grid incremental from ros
 cs_add_executable(${PROJECT_NAME}_ortho_backward_grid_incremental
     src/ortho/main-ortho-backward-grid-incremental.cc)
 add_dependencies(${PROJECT_NAME}_ortho_backward_grid_incremental ${${PROJECT_NAME}_EXPORTED_TARGETS}})
