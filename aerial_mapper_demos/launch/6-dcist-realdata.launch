@@ -8,7 +8,7 @@
 <arg name="flagfile" default="$(find aerial_mapper_demos)/flags/6-dcist-realdata.ff" />
 <node pkg="aerial_mapper_demos" type="aerial_mapper_demos_ortho_ros_stream" name="demo_ortho_ros_stream" output="screen" args="--flagfile=$(arg flagfile)">
   <remap from="~image" to="/undistorter/img0/undist"/>
-  <remap from="~image_sem" to="/undistorter/img0/undist"/>
+  <remap from="~image_sem" to="/ovc/bonus_left/left/image_label_viz"/>
   <remap from="~pose" to="/sfm_pose"/>
 
   <remap from="map_image" to="/top_down_render/map_image"/>

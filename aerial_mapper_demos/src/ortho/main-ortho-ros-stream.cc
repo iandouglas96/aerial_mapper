@@ -71,6 +71,8 @@ DEFINE_bool(integrate_semantics, false,
             "Integrate semantics instead of RGB, use RGB for stereo.");
 DEFINE_double(map_border, 10.0,
               "Distance of robot to border before adding to the map [m]");
+DEFINE_double(stereo_dist_thresh, 1.0,
+              "Distance of robot to move before attemping stereo depth [m]");
 
 Images images_subset;
 Poses T_G_Bs_subset;
@@ -124,7 +126,7 @@ void imgCb(const sensor_msgs::Image::ConstPtr& img,
   Pose T_G_B(pos, rot);
 
   //check if baseline is long enough
-  if ((pos.head<2>() - last_pos.head<2>()).norm() > 5.0) {
+  if ((pos.head<2>() - last_pos.head<2>()).norm() > FLAGS_stereo_dist_thresh) {
     procResize(pos);
 
     if (sem_img && FLAGS_backward_grid_colored_ortho) {

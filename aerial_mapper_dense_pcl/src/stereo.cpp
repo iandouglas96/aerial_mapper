@@ -165,18 +165,19 @@ void Stereo::processStereoFrame(
   rectifier_->rectifyStereoPair(stereo_rig_params_, image_undistorted_1,
                                 image_undistorted_2, &rectified_stereo_pair);
 
-  cv::Mat images_undistorted, images_raw;
-  cv::Mat images_undist_arr[] = {rectified_stereo_pair.image_left, rectified_stereo_pair.image_right};
-  cv::hconcat(images_undist_arr, 2, images_undistorted);
-  for (int y=0; y<images_undistorted.size().height; y+=20) {
-    cv::line(images_undistorted, cv::Point(0, y), cv::Point(images_undistorted.size().width-1, y), cv::Scalar(255,255,255));
-  }
+  // For visualization
+  //cv::Mat images_undistorted, images_raw;
+  //cv::Mat images_undist_arr[] = {rectified_stereo_pair.image_left, rectified_stereo_pair.image_right};
+  //cv::hconcat(images_undist_arr, 2, images_undistorted);
+  //for (int y=0; y<images_undistorted.size().height; y+=20) {
+  //  cv::line(images_undistorted, cv::Point(0, y), cv::Point(images_undistorted.size().width-1, y), cv::Scalar(255,255,255));
+  //}
 
-  cv::Mat images_raw_arr[] = {image_undistorted_1, image_undistorted_2};
-  cv::hconcat(images_raw_arr, 2, images_raw);
-  cv::imshow("undist", images_raw);
-  cv::imshow("rect", images_undistorted);
-  cv::waitKey(10);
+  //cv::Mat images_raw_arr[] = {image_undistorted_1, image_undistorted_2};
+  //cv::hconcat(images_raw_arr, 2, images_raw);
+  //cv::imshow("undist", images_raw);
+  //cv::imshow("rect", images_undistorted);
+  //cv::waitKey(10);
 
   // 3. Compute disparity map based on rectified images.
   DensifiedStereoPair densified_stereo_pair;

@@ -127,7 +127,7 @@ void AerialGridMap::publishImageOnce() {
 
   cv_bridge::CvImagePtr img_ptr(new cv_bridge::CvImage);
   img_ptr->image = img;
-  img_ptr->encoding = "bgr8";
+  img_ptr->encoding = "rgb8";
   sensor_msgs::Image::Ptr img_msg = img_ptr->toImageMsg();
   pub_map_image_.publish(img_msg); 
 
